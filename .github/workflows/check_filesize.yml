@@ -1,17 +1,27 @@
+name: Check file size
+
 on:
-  pull_request:
+  pull_request_target:
     branches: [main]
+
+  workflow_dispatch:
 
 jobs:
   sync-to-hub:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      pull-requests: write   # allow commenting / updating PR
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Check out code
+        uses: actions/checkout@v4
+        with:
+          # Very important for pull_request_target: check out the PR head
+          ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Check large files
         uses: ActionsDesk/lfs-warning@v2.0
         with:
-          filesizelimit: 10485760
+          filesizelimit: 10485760 # 10MB
+
