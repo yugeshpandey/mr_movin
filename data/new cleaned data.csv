@@ -1,4 +1,4 @@
-RegionName,StateName,2021_Avg_Rent,2022_Avg_Rent,2023_Avg_Rent,2024_Avg_Rent,2025_Avg_Rent,Current_Rent
+City,StateName,2021_Avg_Rent,2022_Avg_Rent,2023_Avg_Rent,2024_Avg_Rent,2025_Avg_Rent,Current_Rent
 United States,,1753.0,1945.0,2049.0,2138.0,2211.0,2211.0
 "New York, NY",NY,2627.0,2891.0,3086.0,3256.0,3382.0,3382.0
 "Los Angeles, CA",CA,3431.0,3790.0,3976.0,4146.0,4353.0,4353.0

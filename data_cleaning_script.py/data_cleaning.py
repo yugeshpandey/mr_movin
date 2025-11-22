@@ -63,25 +63,20 @@ def clean_rental_data(input_file, output_file):
     cleaned_df = cleaned_df.drop(columns=[c for c in cols_to_remove if c in cleaned_df.columns])
     print(f"Removed columns: {cols_to_remove}")
 
-    # 4. Save to CSV and Excel
-    cleaned_df.to_csv(output_file, index=False)
-    print(f"Success! Cleaned data saved to CSV: {output_file}")
-    
-    # Save to Excel (requires openpyxl)
-    output_excel = output_file.replace('.csv', '.xlsx')
-    try:
-        cleaned_df.to_excel(output_excel, index=False)
-        print(f"Success! Cleaned data saved to Excel: {output_excel}")
-    except ImportError:
-        print("NOTE: Could not save Excel file. Please run 'pip install openpyxl' and try again.")
-    except Exception as e:
-        print(f"Could not save to Excel: {e}")
+    # 6. Rename RegionName to City
+    if 'RegionName' in cleaned_df.columns:
+        cleaned_df = cleaned_df.rename(columns={'RegionName': 'City'})
+        print("Renamed 'RegionName' column to 'City'")
 
-    return output_excel
+    # 4. Save to CSV (overwrites existing files)
+    cleaned_df.to_csv(output_file, index=False)
+    print(f"Success! Cleaned data saved to CSV: {output_file} (overwritten if existed)")
+
+    return output_file
 
 def get_input_file():
     """
-    Handles file input for both Google Colab and Local environments.
+    Gets the input file from the data_cleaning_script.py directory.
     """
     # Check if running in Google Colab
     try:
@@ -95,30 +90,31 @@ def get_input_file():
         else:
             return None
     except ImportError:
-        # Running locally
-        default_file = "2 rentalMetro_zori_uc_sfr_sm_month.csv"
-        if os.path.exists(default_file):
-            return default_file
+        # Running locally - get the directory where this script is located
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        input_file = os.path.join(script_dir, "2 rentalMetro_zori_uc_sfr_sm_month.csv")
+        
+        if os.path.exists(input_file):
+            print(f"Found input file: {input_file}")
+            return input_file
         else:
-            print(f"File '{default_file}' not found in current directory.")
-            user_input = input("Please enter the path to your CSV file: ")
-            return user_input.strip().strip('"').strip("'")
+            print(f"Error: File '2 rentalMetro_zori_uc_sfr_sm_month.csv' not found in {script_dir}")
+            return None
 
 if __name__ == "__main__":
     # 1. Get the file
     input_csv = get_input_file()
     
     if input_csv:
-        # Extract the filename from input path and save to data folder with same name
-        input_filename = os.path.basename(input_csv)
+        # Always use fixed output filename "new cleaned data.csv"
         # Ensure data folder exists
         data_folder = "data"
         os.makedirs(data_folder, exist_ok=True)
-        output_csv = os.path.join(data_folder, input_filename)
+        output_csv = os.path.join(data_folder, "new cleaned data.csv")
         
         try:
             # 2. Run cleaning
-            excel_file = clean_rental_data(input_csv, output_csv)
+            clean_rental_data(input_csv, output_csv)
             
             # 3. Auto-download results if in Colab
             try:
@@ -129,13 +125,10 @@ if __name__ == "__main__":
                 print("NOTE: If the download doesn't start, check the 'Files' folder icon in the left sidebar.")
                 
                 files.download(output_csv)
-                time.sleep(2) # Wait 2 seconds to prevent browser blocking the second download
-                files.download(excel_file)
             except ImportError:
                 print("-" * 30)
-                print(f"Done! Files saved locally:")
-                print(f"1. {output_csv}")
-                print(f"2. {excel_file}")
+                print(f"Done! File saved locally:")
+                print(f"{output_csv}")
                 
         except Exception as e:
             print(f"An error occurred during processing: {e}")
