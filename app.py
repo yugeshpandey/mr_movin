@@ -68,4 +68,4 @@ with gr.Blocks() as demo:
     clear.click(reset_chat, None, [chatbot, msg])
 
 if __name__ == "__main__":
-    demo.launch()
+    demo.launch(theme='shivi/calm_seafoam')
