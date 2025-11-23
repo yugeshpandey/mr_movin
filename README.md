@@ -1,3 +1,14 @@
+---
+title: Apartment Relocation Assistant
+emoji: 🏙️
+colorFrom: purple
+colorTo: pink
+sdk: gradio
+sdk_version: "4.0"
+app_file: app.py
+pinned: false
+---
+
 # Relocator Advisor (Apartment Relocation Assistant)
 
 This project is a **simple, laptop-friendly chatbot** that helps users explore and compare U.S. metro areas
