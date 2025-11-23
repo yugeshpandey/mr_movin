@@ -3,7 +3,7 @@ from chatbot import chat
 
 # Intro message shown when the app loads or when the user clears the chat
 INTRO_MESSAGE = (
-    "Hi there! I'm Mr. Movin', your Apartment Relocation Assistant.\n\n"
+    "Hi there! I'm Relocator Advisor, your Apartment Relocation Assistant.\n\n"
     "I can help you explore cities and metros based on rent data.\n"
     "Try things like:\n"
     "• \"I have a $2,500 budget and want an apartment in California.\"\n"
@@ -37,7 +37,7 @@ def reset_chat():
 
 with gr.Blocks() as demo:
     gr.Markdown(
-        "# MR. MOVIN' - Apartment Relocation Assistant\n"
+        "# Relocator Advisor - Apartment Relocation Assistant\n"
         "Ask about your monthly rent budget, cheapest metros, or compare cities."
     )
 
