@@ -1,4 +1,4 @@
-# MR. MOVIN (Apartment Relocation Assistant)
+# Relocator Advisor (Apartment Relocation Assistant)
 
 This project is a **simple, laptop-friendly chatbot** that helps users explore and compare U.S. metro areas
 based on Zillow Home Value Index (ZHVI) data. It uses the cleaned Zillow dataset included in `data/` and
