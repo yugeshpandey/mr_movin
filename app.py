@@ -3,7 +3,7 @@ from chatbot import chat
 
 # Intro message shown when the app loads or when the user clears the chat
 INTRO_MESSAGE = (
-    "Hi there! 👋 I'm your Apartment Relocation Assistant.\n\n"
+    "Hi there! I'm Mr. Movin', your Apartment Relocation Assistant.\n\n"
     "I can help you explore cities and metros based on rent data.\n"
     "Try things like:\n"
     "• \"I have a $2,500 budget and want an apartment in California.\"\n"
@@ -14,17 +14,6 @@ INTRO_MESSAGE = (
 
 
 def respond(message, history):
-    """
-    Gradio Chatbot (newer versions) expects `history` to be a list of
-    dicts with keys: 'role' and 'content'.
-
-    Example:
-        [
-          {"role": "user", "content": "..."},
-          {"role": "assistant", "content": "..."},
-          ...
-        ]
-    """
     history = history or []
 
     # Call your core chat function — it returns a string reply
@@ -48,7 +37,7 @@ def reset_chat():
 
 with gr.Blocks() as demo:
     gr.Markdown(
-        "# 🏙️ Apartment Relocation Assistant\n"
+        "# MR. MOVIN' - Apartment Relocation Assistant\n"
         "Ask about your monthly rent budget, cheapest metros, or compare cities."
     )
 
@@ -59,7 +48,7 @@ with gr.Blocks() as demo:
         show_label=False,
     )
     msg = gr.Textbox(
-        placeholder="Example: I have a $2500 budget in CA.",
+        placeholder="Example: I have a $2500 budget in IL.",
         label="Your message",
     )
     clear = gr.Button("Clear chat")

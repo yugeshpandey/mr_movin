@@ -4,8 +4,6 @@ from typing import Optional, Dict, Literal, List
 import pandas as pd
 
 # ---- Configuration ----
-
-# Name of the cleaned rent dataset (you can change this if you rename the file)
 _DATA_FILENAME = "new cleaned data.csv"
 
 # Cache for the loaded DataFrame
@@ -36,15 +34,7 @@ def _compute_growth_columns(df: pd.DataFrame) -> pd.DataFrame:
     """
     Add growth-related columns to the DataFrame in-place and return it.
 
-    With your updated CSV layout, we assume the following columns exist:
-        - 2021_Avg_Rent
-        - 2022_Avg_Rent
-        - 2023_Avg_Rent
-        - 2024_Avg_Rent
-        - 2025_Avg_Rent
-        - Current_Rent
-
-    We compute:
+    compute:
         - rent_3yr_change / rent_3yr_pct_change (2022 -> Current)
         - rent_5yr_change / rent_5yr_pct_change (2021 -> Current)
         - trend_label: 'rising' / 'flat' / 'falling' based on 3yr % change
@@ -87,7 +77,7 @@ def load_data() -> pd.DataFrame:
     """
     Load the cleaned rent dataset with growth columns, cached in memory.
 
-    Expected CSV columns (from your file):
+    Expected CSV columns:
         City, StateName, 2021_Avg_Rent, 2022_Avg_Rent, 2023_Avg_Rent,
         2024_Avg_Rent, 2025_Avg_Rent, Current_Rent
 
@@ -104,7 +94,7 @@ def load_data() -> pd.DataFrame:
         df = df.rename(
             columns={
                 "StateName": "State",
-                "City": "RegionName",  # IMPORTANT: so the rest of the code can use RegionName
+                "City": "RegionName",
             }
         )
 
