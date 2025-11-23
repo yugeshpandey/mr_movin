@@ -1,5 +1,5 @@
 import os
-from typing import Optional, Dict, Literal
+from typing import Optional, Dict, Literal, List
 
 import pandas as pd
 
@@ -16,33 +16,39 @@ def _get_data_path() -> str:
     """
     Resolve the path to the cleaned rent dataset.
 
-    Assumes this file lives in the same folder as recommender.py and that
-    the CSV is inside a 'data' subfolder:
-
-        project_root/
-          app.py
-          chatbot.py
-          recommender.py
-          data/
-            new cleaned data.csv
+    We first look for the CSV in the same folder as this file.
+    If not found, we look for it in a "data" subfolder, and finally
+    fall back to the current working directory.
     """
     here = os.path.dirname(os.path.abspath(__file__))
-    return os.path.join(here, "data", _DATA_FILENAME)
+    direct_path = os.path.join(here, _DATA_FILENAME)
+    if os.path.exists(direct_path):
+        return direct_path
+
+    data_path = os.path.join(here, "data", _DATA_FILENAME)
+    if os.path.exists(data_path):
+        return data_path
+
+    return _DATA_FILENAME
 
 
 def _compute_growth_columns(df: pd.DataFrame) -> pd.DataFrame:
     """
     Add growth-related columns to the DataFrame in-place and return it.
 
-    Computes:
-    - rent_3yr_change
-    - rent_3yr_pct_change
-    - rent_5yr_change
-    - rent_5yr_pct_change
-    - trend_label (simple 'rising' / 'flat' / 'falling' based on 3yr % change)
+    With your updated CSV layout, we assume the following columns exist:
+        - 2021_Avg_Rent
+        - 2022_Avg_Rent
+        - 2023_Avg_Rent
+        - 2024_Avg_Rent
+        - 2025_Avg_Rent
+        - Current_Rent
+
+    We compute:
+        - rent_3yr_change / rent_3yr_pct_change (2022 -> Current)
+        - rent_5yr_change / rent_5yr_pct_change (2021 -> Current)
+        - trend_label: 'rising' / 'flat' / 'falling' based on 3yr % change
     """
-    # We assume yearly columns exist; if not, this will raise clearly.
-    # You can guard with `if "2022_Avg_Rent" in df.columns` if needed.
     df = df.copy()
 
     # 3-year: 2022 -> Current
@@ -81,25 +87,24 @@ def load_data() -> pd.DataFrame:
     """
     Load the cleaned rent dataset with growth columns, cached in memory.
 
-    Returns:
-        pandas.DataFrame with at least:
-            RegionName, StateName, Current_Rent,
-            2021_Avg_Rent, 2022_Avg_Rent, 2023_Avg_Rent,
-            2024_Avg_Rent, 2025_Avg_Rent
-        and computed columns:
-            rent_3yr_change, rent_3yr_pct_change,
-            rent_5yr_change, rent_5yr_pct_change,
-            trend_label
+    Expected CSV columns (from your file):
+        City, StateName, 2021_Avg_Rent, 2022_Avg_Rent, 2023_Avg_Rent,
+        2024_Avg_Rent, 2025_Avg_Rent, Current_Rent
+
+    We normalize these to internal names:
+        City      -> RegionName
+        StateName -> State
     """
     global _DATA_CACHE
     if _DATA_CACHE is None:
         data_path = _get_data_path()
         df = pd.read_csv(data_path)
 
-        # Normalize column names a bit
+        # Normalize column names to internal names
         df = df.rename(
             columns={
                 "StateName": "State",
+                "City": "RegionName",  # IMPORTANT: so the rest of the code can use RegionName
             }
         )
 
@@ -139,17 +144,17 @@ def filter_by_budget(
     df = load_data().copy()
 
     # Filter out United States aggregate row by default
-    if not include_us_aggregate:
+    if not include_us_aggregate and "RegionName" in df.columns:
         df = df[df["RegionName"] != "United States"]
 
     df = df[df["Current_Rent"].notna()]
     df = df[df["Current_Rent"] <= monthly_budget]
 
-    if state:
+    if state and "State" in df.columns:
         state = state.upper()
         df = df[df["State"].fillna("").str.upper() == state]
 
-    if trend:
+    if trend and "trend_label" in df.columns:
         df = df[df["trend_label"] == trend]
 
     df = df.sort_values("Current_Rent", ascending=True)
@@ -163,27 +168,19 @@ def cheapest_metros(
 ) -> pd.DataFrame:
     """
     Return the cheapest metros by Current_Rent.
-
-    Args:
-        limit: number of rows to return.
-        state: optional state filter.
-        include_us_aggregate: whether to include the 'United States' row.
-
-    Returns:
-        DataFrame sorted by Current_Rent ascending.
     """
     df = load_data().copy()
 
-    if not include_us_aggregate:
+    if not include_us_aggregate and "RegionName" in df.columns:
         df = df[df["RegionName"] != "United States"]
 
-    df = df[df["Current_Rent"].notna()]
-
-    if state:
+    if state and "State" in df.columns:
         state = state.upper()
         df = df[df["State"].fillna("").str.upper() == state]
 
+    df = df[df["Current_Rent"].notna()]
     df = df.sort_values("Current_Rent", ascending=True)
+
     return df.head(limit)
 
 
@@ -194,27 +191,19 @@ def most_expensive_metros(
 ) -> pd.DataFrame:
     """
     Return the most expensive metros by Current_Rent.
-
-    Args:
-        limit: number of rows to return.
-        state: optional state filter.
-        include_us_aggregate: whether to include the 'United States' row.
-
-    Returns:
-        DataFrame sorted by Current_Rent descending.
     """
     df = load_data().copy()
 
-    if not include_us_aggregate:
+    if not include_us_aggregate and "RegionName" in df.columns:
         df = df[df["RegionName"] != "United States"]
 
-    df = df[df["Current_Rent"].notna()]
-
-    if state:
+    if state and "State" in df.columns:
         state = state.upper()
         df = df[df["State"].fillna("").str.upper() == state]
 
+    df = df[df["Current_Rent"].notna()]
     df = df.sort_values("Current_Rent", ascending=False)
+
     return df.head(limit)
 
 
@@ -226,24 +215,22 @@ def best_rent_growth(
     include_us_aggregate: bool = False,
 ) -> pd.DataFrame:
     """
-    Return metros with the strongest or weakest rent growth.
+    Return metros with the strongest rising or declining rents.
 
-    Args:
-        limit: number of rows to return.
-        horizon: '3y' or '5y' (3-year or 5-year % change).
-        direction: 'up' for fastest appreciation, 'down' for biggest declines.
-        state: optional state filter.
-        include_us_aggregate: whether to include 'United States' row.
+    horizon:
+        "3y" → use rent_3yr_pct_change
+        "5y" → use rent_5yr_pct_change
 
-    Returns:
-        DataFrame sorted by the chosen % change.
+    direction:
+        "up"   → highest positive growth
+        "down" → lowest/most negative growth
     """
     df = load_data().copy()
 
-    if not include_us_aggregate:
+    if not include_us_aggregate and "RegionName" in df.columns:
         df = df[df["RegionName"] != "United States"]
 
-    if state:
+    if state and "State" in df.columns:
         state = state.upper()
         df = df[df["State"].fillna("").str.upper() == state]
 
@@ -251,6 +238,9 @@ def best_rent_growth(
         col = "rent_3yr_pct_change"
     else:
         col = "rent_5yr_pct_change"
+
+    if col not in df.columns:
+        return df.iloc[0:0].copy()  # empty
 
     df = df[df[col].notna()]
 
@@ -260,25 +250,46 @@ def best_rent_growth(
     return df.head(limit)
 
 
+def available_states() -> List[str]:
+    """
+    Return a sorted list of state codes that exist in the dataset.
+    """
+    df = load_data()
+    if "State" not in df.columns:
+        return []
+    states = (
+        df["State"]
+        .dropna()
+        .astype(str)
+        .str.strip()
+        .str.upper()
+        .unique()
+        .tolist()
+    )
+    states = [s for s in states if s]
+    return sorted(states)
+
+
 def compare_metros(metro_a: str, metro_b: str) -> Dict[str, Optional[Dict]]:
     """
     Compare two metros by name.
 
-    The matching is case-insensitive and will first try exact match on RegionName.
-    If that fails, it will fall back to 'contains' search.
+    Matching is case-insensitive:
+      1. Exact match on RegionName
+      2. Fallback to "contains" search on RegionName
 
     Returns:
         {
           "a": { ... row for metro_a ... } or None,
           "b": { ... row for metro_b ... } or None
         }
-
-    Each row dict includes growth metrics and rent columns, so the chatbot or
-    LLM layer can format a nice natural-language comparison.
     """
     df = load_data()
 
     def _find(metro: str) -> Optional[Dict]:
+        if "RegionName" not in df.columns:
+            return None
+
         # Exact match
         exact = df[df["RegionName"].str.lower() == metro.lower()]
         if not exact.empty:
