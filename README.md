@@ -5,8 +5,24 @@ based on Zillow Home Value Index (ZHVI) data. It uses the cleaned Zillow dataset
 exposes a chat interface via **Gradio**.
 
 ## Features
+1. Runs on free or local compute (Colab, local CPU, HuggingFace Spaces).
 
-TODO
+2. Uses Zillow-like rental data (CSV files).
+
+3. Provides rental recommendations:
+
+    a. Cheapest metros
+
+    b. Budget filtering
+
+4. Trends (up-and-coming, declining markets)
+
+5. Metro-to-metro comparison
+
+6. Uses a small LLM (FLAN-T5) to polish responses.
+
+7. Provides an interactive UI (Gradio) with a friendly feel.
+
 ---
 
 ## Setup Instructions
